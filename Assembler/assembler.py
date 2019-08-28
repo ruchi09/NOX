@@ -40,9 +40,9 @@ import sys
 #  SOC_BACK : contains the address which points to end of output queue
 #  PROG_STACK_TOP : points to the top of program stack
 #  MAR : memory address register (conventional)
-#  ICOM : interrupt communication register (communicate to processor)
-#  DCOM : data communication register (receives data)
-#  NZCV : neg,zero,carry,overflow
+#  ITYP : interrupt type (stores the type of interrupt)
+#  COMM : data and interrupt communication register (receives data and sends ack)
+#  CTRL : neg,zero,carry,overflow, soc_queue full
 #  MDR  : memory data register. will store fetched data
 #  ANS  : temporarily stores computed value
 #  IR   : Instruction register
@@ -52,12 +52,13 @@ import sys
 OP_CODES={ 'COMP':'0000', 'MOV':'0001', 'INC':'0010',
            'DEC':'0011', 'SET':'0100', 'HALT':'0101',
            'JUMP':'0110','FETCH':'0111','CALL':'1000',
-           'JUMPEQ':'1001', 'ADD':'1010', 'MOD':'1011'
+           'JUMPEQ':'1001', 'ADD':'1010', 'MOD':'1011',
+           'OR':'1100'
            }
 
 REGISTERS = {'A':'0000','B':'0001','PC':'0010','SOC_FRONT':'0011',
              'PROG_STACK_TOP':'0100','MAR':'0101','SOC_BACK':'0110',
-             'ICOM':'0111', 'DCOM':'1000', 'NZCV':'1001','MDR':'1010',
+             'ITYP':'0111', 'DCOM':'1000', 'CTRL':'1001','MDR':'1010',
              'ANS':'1011', 'IR': '1100', 'IHAR':'1101' }
 
 UNARY_OPS = ['INC', 'JUMP','FETCH','JUMPEQ', 'DEC']

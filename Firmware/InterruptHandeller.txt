@@ -1,5 +1,5 @@
 SET A 1000
-COMP ICOM A
+COMP ITYP A
 JUMPEQ @handshake
 
 
@@ -9,16 +9,17 @@ INC SOC_BACK
 MOD SOC_BACK 1000
 COMP ANS SOC_FRONT
 JUMPEQ @return_full
-SET ICOM 1100
-JUMP @return_success
+SET COMM 1100
+JUMP @return
+
 
 
 
 
 @return_full
-SET ICOM 1010
+SET COMM 1010
 
-@return_success
+@return
 MOV MAR PROG_STACK_TOP
 FETCH MDR
 DEC PROG_STACK_TOP
