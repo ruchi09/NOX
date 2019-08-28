@@ -1,0 +1,26 @@
+SET A 1000
+COMP ICOM A
+JUMPEQ @handshake
+
+
+
+@handshake
+INC SOC_BACK
+MOD SOC_BACK 1000
+COMP ANS SOC_FRONT
+JUMPEQ @return_full
+SET ICOM 1100
+JUMP @return_success
+
+
+
+
+@return_full
+SET ICOM 1010
+
+@return_success
+MOV MAR PROG_STACK_TOP
+FETCH MDR
+DEC PROG_STACK_TOP
+MOV PROG_STACK_TOP ANS
+MOV PC MDR
