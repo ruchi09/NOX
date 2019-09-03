@@ -1,5 +1,5 @@
-SET A 1000
-COMP ITYP A
+SET A 10E0
+COMP ITYPE A
 JUMPEQ @handshake
 
 
@@ -11,6 +11,8 @@ COMP ANS SOC_FRONT
 JUMPEQ @return_full
 SET COMM 1100
 JUMP @return
+
+
 
 
 

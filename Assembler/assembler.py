@@ -18,7 +18,7 @@ import sys
 # ---------------------------------------------------------------------------------------------------
 #                      OP_CODES DESCRIPTION
 #
-#  COMP A B: compares A and B and stores the result in NZCV
+#  COMP A B: compares A and B and stores the result in CTRL
 #  MOV A B: moves/copies content of register B to register A
 #  INC A: increments address stored at register A by one memory address and stores in ANS
 #  DEC A: deccrements address stored at register A by one memory address and stores in ANS
@@ -30,6 +30,7 @@ import sys
 #  JUMPEQ A B: jump if A is equal to B
 #  MOD A val: Performs A modulus val
 #  STORE A: store the data contained by A to the address pointed by MAR
+#  CHECK : Checks socket queue top in rule table to validate copy, sets N as 0 in CTRL if socket denied
 #-----------------------------------------------------------------------------------------------------
 
 #--------------------------------------------------------------------------
@@ -40,7 +41,7 @@ import sys
 #  SOC_BACK : contains the address which points to end of output queue
 #  PROG_STACK_TOP : points to the top of program stack
 #  MAR : memory address register (conventional)
-#  ITYP : interrupt type (stores the type of interrupt)
+#  ITYPE : interrupt type (stores the type of interrupt)
 #  COMM : data and interrupt communication register (receives data and sends ack)
 #  CTRL : neg,zero,carry,overflow, soc_queue full
 #  MDR  : memory data register. will store fetched data
@@ -53,18 +54,18 @@ OP_CODES={ 'COMP':'0000', 'MOV':'0001', 'INC':'0010',
            'DEC':'0011', 'SET':'0100', 'HALT':'0101',
            'JUMP':'0110','FETCH':'0111','CALL':'1000',
            'JUMPEQ':'1001', 'ADD':'1010', 'MOD':'1011',
-           'OR':'1100'
+           'OR':'1100', 'CHECK':'1101', 'AND':'1110'
            }
 
 REGISTERS = {'A':'0000','B':'0001','PC':'0010','SOC_FRONT':'0011',
              'PROG_STACK_TOP':'0100','MAR':'0101','SOC_BACK':'0110',
-             'ITYP':'0111', 'DCOM':'1000', 'CTRL':'1001','MDR':'1010',
+             'ITYPE':'0111', 'COMM':'1000', 'CTRL':'1001','MDR':'1010',
              'ANS':'1011', 'IR': '1100', 'IHAR':'1101' }
 
 UNARY_OPS = ['INC', 'JUMP','FETCH','JUMPEQ', 'DEC']
 
 
-
+calls = dict()
 
 
 
@@ -145,6 +146,11 @@ def Convert_Prog_to_bin_temp(fp,debug):
     global a
     global linecount
     global binary_file_linecount
+    global OP_CODES
+    global REGISTERS
+    global UNARY_OPS
+    global calls
+
     linecount = 0
     binary_file_linecount = 1
 
@@ -157,8 +163,14 @@ def Convert_Prog_to_bin_temp(fp,debug):
         linecount = linecount+1
         if debug>0: print(" [DEBUG] line",linecount,":",a,end='')
         a = a.strip().split(' ')
-        if a[0]=='' or a[0][0]=='@':
+        if a[0]=='' :
             # bin_temp = ""
+            assembly.append((""," ".join(a)) )
+            a=fp.readline()
+
+        elif a[0][0]=='@':
+            if a[0][1:] not in calls.keys():
+                calls[a[0][1:]] = str(binary_file_linecount)
             assembly.append((""," ".join(a)) )
             a=fp.readline()
 
@@ -170,13 +182,13 @@ def Convert_Prog_to_bin_temp(fp,debug):
             exit()
         else:
             bin_temp = OP_CODES[a[0]]
-            if a[0] == 'HALT':
+            if a[0] in ['HALT','CHECK']:
                 if len(a)>1:
                     print("[ERROR] no operand expected!")
                     print(" line",linecount,":"," ".join(a))
                     fp.close()
                     exit()
-                bin_temp = bin_temp + "00000000000000000000"
+                bin_temp = bin_temp + "00000000000000000000" #extra zeros are padding
 
             elif len(a)>2 and (a[0] in UNARY_OPS) :
                 print("[ERROR] single operand expected!")
@@ -226,7 +238,7 @@ def Convert_Prog_to_bin_temp(fp,debug):
                     if a[0] not in {'SET', 'MOD'} :
 
                         if a[2] in REGISTERS.keys():
-                            bin_temp = bin_temp + REGISTERS[a[2]] + '000000000000'
+                            bin_temp = bin_temp + REGISTERS[a[2]] + '000000000000' #extra zeros are padding
                         else:
                             print("\n[ERROR] No such operand register !!")
                             print(" line",linecount,":",a[0],a[1], a[2],"<--")
@@ -276,6 +288,11 @@ def Convert_Prog_to_bin_temp(fp,debug):
 def DetectCalls(tag,fp):
     global binary_file_linecount
     global a
+    global calls
+
+    if tag in calls.keys():
+        return '(' + calls[tag] + ')'
+
     data = fp.readline()
     count=binary_file_linecount+1
     while data!='':
@@ -283,6 +300,7 @@ def DetectCalls(tag,fp):
         if data[0] == '@':
             data = data.strip().split(' ')
             if tag == data[0][1:]:
+                calls[tag] = str(count)
                 return '(' + str(count) + ')'
         if len(data)>1:
             print("{data: }",data)
@@ -314,7 +332,7 @@ if __name__ == "__main__":
         # print("\n m = ",m)
         b = Convert_Prog_to_bin_temp(fp,debug)
         fp.close()
-        print("\n\n (DEBUGGER)BINARY:")
+        print("\n\n (DEBUGGER)  BINARY:")
         debug_display(b)
         print("\n\n\n\n-------------------- Binary-----------------------------")
         for i in b:
