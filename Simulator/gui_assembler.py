@@ -14,7 +14,7 @@
 
 
 import sys
-
+from inspect import currentframe, getframeinfo
 # ---------------------------------------------------------------------------------------------------
 #                      OP_CODES DESCRIPTION
 #
@@ -33,7 +33,7 @@ import sys
 #  CHECK : Checks socket queue top in rule table to validate copy, sets N as 0 in CTRL if socket denied
 #-----------------------------------------------------------------------------------------------------
 
-#--------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------
 #                            REGISTERS
 #
 #  A,B : general purpose registers
@@ -48,7 +48,7 @@ import sys
 #  ANS  : temporarily stores computed value
 #  IR   : Instruction register
 #  IHAR : interrupt handler address register
-# ----------------------------------------------------------------------
+# -------------------------------------------------------------------------------------------------
 
 OP_CODES={ 'COMP':'0000', 'MOV':'0001', 'INC':'0010',
            'DEC':'0011', 'SET':'0100', 'HALT':'0101',
@@ -150,18 +150,19 @@ def Convert_Prog_to_bin_temp(fp,debug):
     global REGISTERS
     global UNARY_OPS
     global calls
-
+    global cf
     linecount = 0
     binary_file_linecount = 1
 
 
     assembly = []
-    a=fp.readline().upper()
+    a=fp.readline()
+    if debug>0: print("\n")
     while a!="":
         # print("line:",a)
 
         linecount = linecount+1
-        if debug>0: print(" [DEBUG] line",linecount,":",a,end='')
+        if debug>0: print(" [DEBUG](assembler.py:",cf.f_lineno,") ["+fp.name+" line",linecount,"]",a,end='')
         a = a.strip().split(' ')
         if a[0]=='' :
             # bin_temp = ""
@@ -289,21 +290,26 @@ def DetectCalls(tag,fp):
     global binary_file_linecount
     global a
     global calls
-
+    global cf
+    global debug
+    if debug>0: print("\n")
     if tag in calls.keys():
         return '(' + calls[tag] + ')'
 
     data = fp.readline()
     count=binary_file_linecount+1
     while data!='':
-        print("{data: }",data, count)
+        if debug>0: print(" [DEBUG](assembler.py:",cf.f_lineno,") data: ",data[:len(data)-1], count)
         if data[0] == '@':
             data = data.strip().split(' ')
             if tag == data[0][1:]:
                 calls[tag] = str(count)
                 return '(' + str(count) + ')'
         if len(data)>1:
-            print("{data: }",data)
+            if debug>0: print(" [DEBUG](assembler.py:",cf.f_lineno,") data: ",data)
+
+            # print("This is line 310, python says line ", cf.f_lineno )
+            # print("The filename is ", filename)
             count = count+1
         data = fp.readline()
 
@@ -315,34 +321,53 @@ def DetectCalls(tag,fp):
 
 
 # ----------------------------------------------------------------------------
-#                         DRIVER FUNCTION
+#                         DRIVER FUNCTION FOR MODULE CALL
 # ----------------------------------------------------------------------------
 
-# 
-# if __name__ == "__main__":
-#     debug=1
-#
-#     try:
-#
-#         fp = open(sys.argv[1], "r")
-#         if debug>0: print("\n [DEBUG] Opened! :",sys.argv[1])
-#         # DetectCalls('a',fp)
-#         # fp.seek(0,0)
-#         # m = fp.readline()
-#         # print("\n m = ",m)
-#         b = Convert_Prog_to_bin_temp(fp,debug)
-#         fp.close()
-#         print("\n\n (DEBUGGER)  BINARY:")
-#         debug_display(b)
-#         print("\n\n\n\n-------------------- Binary-----------------------------")
-#         for i in b:
-#             if len(i[0]) >2:
-#                 print("  ",i[0])
-#
-#
-#
-#     except IOError as e:
-#         errno, strerror = e.args
-#         print("I/O error({0}): {1}".format(errno,strerror))
-#         # e can be printed directly without using .args:
-#         # print(e)
+def assemble(filename):
+    global debug
+    global cf
+    cf = currentframe()
+    filename = getframeinfo(cf).filename
+    debug=0
+
+    fp = open(filename, "r")
+    if debug>0: print("\n [DEBUG] Opened! :",sys.argv[1])
+    if debug>0: print("\n")
+    b = Convert_Prog_to_bin_temp(fp,debug)
+    fp.close()
+
+# ----------------------------------------------------------------------------
+#                         DRIVER FUNCTION FOR CLI CALL\EXECUTION
+# ----------------------------------------------------------------------------
+
+
+if __name__ == "__main__":
+    global cf
+    global debug
+    cf = currentframe()
+    filename = getframeinfo(cf).filename
+    debug=1
+
+    try:
+
+        fp = open(sys.argv[1], "r")
+        if debug>0: print("\n [DEBUG] Opened! :",sys.argv[1])
+        if debug>0: print("\n")
+        b = Convert_Prog_to_bin_temp(fp,debug)
+
+        fp.close()
+        print("\n\n (DEBUGGER)  BINARY:")
+        debug_display(b)
+        print("\n\n\n\n-------------------- Binary-----------------------------")
+        for i in b:
+            if len(i[0]) >2:
+                print("  ",i[0])
+
+
+
+    except IOError as e:
+        errno, strerror = e.args
+        print("I/O error({0}): {1}".format(errno,strerror))
+        # e can be printed directly without using .args:
+        # print(e)
