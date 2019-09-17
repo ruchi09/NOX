@@ -1,7 +1,10 @@
 #!/usr/bin/python3
 
 class Input_Processing_Unit():
-
+''' class for IPU
+    Args:
+        None
+'''
     def __init__(self):
         self.state =0
         self.storage = []
@@ -11,6 +14,9 @@ class Input_Processing_Unit():
 
 
     def read_bits(self):
+        ## Method for reading
+        # Args:
+        #   self
         f = open("raw_traffic.txt", "r")
         a=f.read(1)
         while a:
