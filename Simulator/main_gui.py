@@ -141,9 +141,9 @@ def add_top_menu(frame):
     menu.add_cascade(label='File', menu=filemenu)
     runmenu = Menu(menu)
     menu.add_cascade(label = 'Run', menu=runmenu)
-    filemenu.add_command(label="Open", command=c.onOpen)
-    filemenu.add_command(label="New", command=c.onNew)
-    filemenu.add_command(label="Save", command=c.onSave)
+    filemenu.add_command(label="Open" )
+    filemenu.add_command(label="New" )
+    filemenu.add_command(label="Save")
     filemenu.add_separator()
     filemenu.add_command(label='Exit', command=frame.quit)
 
@@ -202,30 +202,30 @@ if __name__ == '__main__':
     registers = Frame(root, width = 30)
     pin_console_code = Frame(root, bg = 'gray95', width = 800)
     pins = Frame(pin_console_code, width =30, bg = 'gray80')
+
     console = ScrolledText(pin_console_code,bg='#bfd9d9', height = 14)
     console.config(state=DISABLED)
+
+    notebook = CustomNotebook(pin_console_code,width=200, height=200)
+
 
     registers.pack(side = "left",fill="both")
     pin_console_code.pack(side = "right",fill="both", expand = True)
 
+
+
     # inserting CODE GUI in right frame
-    c= Code(pin_console_code)
+    # c= Code(pin_console_code)
     console.pack(side='bottom', fill='both')
-    c.pack(side="left", fill="both" ,expand=True)
+    notebook.pack(side="left", fill="both", expand=True)
     pins.pack(side = "left",fill='both')
+    # c.pack(side="left", fill="both" ,expand=True)
 
 
     # adding pins
     var = IntVar()
     ch = Checkbutton(pins, text="Interrupt", variable=var, width = 30, bg='gray80')
     ch.pack(side = "left",fill='both')
-
-    #addmin text to console
-    # console_text = Text(console, bg='black')
-    # console_text.pack(side='top', fill = 'both')
-    # var1 = IntVar()
-    # ch1 = Checkbutton(console, text="console", variable=var1, width = 30, bg='gray80')
-    # ch1.pack()
 
 
     #creating top menu

@@ -20,6 +20,9 @@ class CustomNotebook(ttk.Notebook):
         self.bind("<ButtonPress-1>", self.on_close_press, True)
         self.bind("<ButtonRelease-1>", self.on_close_release)
 
+
+    
+
     def on_close_press(self, event):
         """Called when the button is pressed over the close button"""
 
@@ -93,7 +96,7 @@ class CustomNotebook(ttk.Notebook):
 # if __name__ == "__main__":
 #     root = tk.Tk()
 #
-#     notebook = CustomNotebook(width=200, height=200)
+#     notebook = CustomNotebook(root,width=200, height=200)
 #     notebook.pack(side="top", fill="both", expand=True)
 #
 #     for color in ("red", "orange", "green", "blue", "violet"):
