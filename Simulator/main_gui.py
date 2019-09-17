@@ -8,7 +8,8 @@
 
 from tkinter import *
 from tkinter import filedialog, messagebox
-
+from tkinter import ttk
+from customNotebook import CustomNotebook  #user defined
 
 COLORS = {'color' : '#40E0D0'}
 ASSEMBLING = 0
@@ -24,6 +25,7 @@ class ScrolledText(Frame):
         self.text.configure(yscrollcommand=self.vsb.set)
         self.vsb.pack(side="right", fill="y")
         self.text.pack(side="left", fill="both", expand=True)
+
 
         # expose some text methods as methods on this object
         self.insert = self.text.insert
@@ -41,7 +43,7 @@ class ScrolledText(Frame):
 
 class Code(Frame):
     def __init__(self, parent):
-        Frame.__init__(self, parent)
+        Frame.__init__(self, parent, bg = 'gray89')
         self.scrolled_text = None
         self.current_file = None
 
@@ -55,11 +57,12 @@ class Code(Frame):
         dlg = filedialog.Open(self, filetypes = ftypes)
         filename = dlg.show()
         self.current_file = filename
-        if filename != '':
+        # print("file:  ", filename, type(filename))
+        if filename != '' and len(filename)>0:
             with open(filename, "r+") as f:
                 if self.scrolled_text == None:
-                    self.scrolled_text = ScrolledText(self)
-                    self.scrolled_text.pack(side="top", fill="both", expand=True)
+                    self.scrolled_text = ScrolledText(self, width=750)
+                    self.scrolled_text.pack(side="left", fill="both", expand=True)
                 self.scrolled_text.delete('1.0',END)
                 prog = f.read()
                 self.scrolled_text.insert("1.0", prog )
@@ -122,12 +125,17 @@ class Code(Frame):
 
 
 
+    def onAssem():
+        pass
+
+
+
 def add_top_menu(frame):
     #creating top menu
     global ASSEMBLING
     global FILE_OPEN
     global runmenu
-    menu = Menu(frame, bg = 'light sea green')
+    menu = Menu(frame, bg = '#20b2aa')
     frame.config(menu=menu)
     filemenu = Menu(menu)
     menu.add_cascade(label='File', menu=filemenu)
@@ -189,26 +197,61 @@ if __name__ == '__main__':
     global root
     # creating main window object
     root = Tk()
-    root.geometry("630x650")
+    root.geometry("830x650")
     root.title('Simulator')
     registers = Frame(root, width = 30)
-    code = Frame(root, width = 600)
+    pin_console_code = Frame(root, bg = 'gray95', width = 800)
+    pins = Frame(pin_console_code, width =30, bg = 'gray80')
+    console = ScrolledText(pin_console_code,bg='#bfd9d9', height = 14)
+    console.config(state=DISABLED)
+
     registers.pack(side = "left",fill="both")
-    code.pack(side = "right",fill="both", expand = True)
+    pin_console_code.pack(side = "right",fill="both", expand = True)
 
     # inserting CODE GUI in right frame
-    c= Code(code)
-    c.pack(side="top", fill="both", expand=True)
+    c= Code(pin_console_code)
+    console.pack(side='bottom', fill='both')
+    c.pack(side="left", fill="both" ,expand=True)
+    pins.pack(side = "left",fill='both')
+
+
+    # adding pins
+    var = IntVar()
+    ch = Checkbutton(pins, text="Interrupt", variable=var, width = 30, bg='gray80')
+    ch.pack(side = "left",fill='both')
+
+    #addmin text to console
+    # console_text = Text(console, bg='black')
+    # console_text.pack(side='top', fill = 'both')
+    # var1 = IntVar()
+    # ch1 = Checkbutton(console, text="console", variable=var1, width = 30, bg='gray80')
+    # ch1.pack()
+
 
     #creating top menu
     add_top_menu(root)
 
 
     # inserting values in register frame
-    T = Text(registers, width = 30, bg ='gray85')
+    T = Text(registers, width = 30, bg ='gray80')
     T.pack(side = 'top', fill='both',expand = True)
     T.config(state=DISABLED)
     update_registers(T)
 
 
     mainloop()
+
+
+# import customNotebook as cn
+# import tkinter as tk
+# if __name__ == "__main__":
+#     root = tk.Tk()
+#
+#     notebook = cn.CustomNotebook(width=200, height=200)
+#     notebook.pack(side="top", fill="both", expand=True)
+#
+#     for color in ("red", "orange", "green", "blue", "violet"):
+#         frame = tk.Frame(notebook, background=color)
+#         notebook.add(frame, text=color)
+#
+#     root.mainloop()
