@@ -1,5 +1,3 @@
- #!/usr/bin/python3
-
 
 # -----------------------------------------------------------------------
 #   Author Name: Ruchi Saha
@@ -15,6 +13,9 @@
 
 import sys
 from inspect import currentframe, getframeinfo
+
+
+
 # ---------------------------------------------------------------------------------------------------
 #                      OP_CODES DESCRIPTION
 #
@@ -66,8 +67,8 @@ UNARY_OPS = ['INC', 'JUMP','FETCH','JUMPEQ', 'DEC']
 
 
 calls = dict()
-
-
+error = ""
+instruction_width = 24
 
 # ------------------------------------------------------------------------------
 # debug_display: function to display binary instructions along with assembly
@@ -90,10 +91,10 @@ def debug_display(z):
 
     for i in z:
         if i[0]!='':
-            count = count + 1
-            print('{:<16s}{:<30s}{:<32s}'.format( "    "+str(count),i[1],i[0]) )
+
+            print('{:<16s}{:<30s}{:<32s}'.format( "    "+str(i[2]),i[1],i[0]) )
         else:
-            print('{:<16s}{:<30s}{:<32s}'.format( "    ",i[1],i[0]) )
+            print('{:<16s}{:<30s}{:<32s}'.format( " ",i[1],i[0]) )
 
         # print("line ",count, ":", i[1],i[0])
 
@@ -104,13 +105,13 @@ def debug_display(z):
 #
 # Parameters: z --> (string) Hexadecimal value
 #
-# Return values: b --> (string) Equivalent binary
+# Return values: b --> (string) Equivalent binary if no errors, else ""
 # ------------------------------------------------------------------------------
 
 def hex_to_bin(z):
     global a
     global linecount
-
+    global error
     bin_hex = {'0':'0000','1':'0001','2':'0010','3':'0011',
                 '4':'0100','5':'0101','6':'0110','7':'0111',
                 '8':'1000','9':'1001','A':'1010','B':'1011',
@@ -123,7 +124,8 @@ def hex_to_bin(z):
         else:
             print("\n[ERROR] Invalid value!!")
             print(" line",linecount,":"," ".join(a), "<--\n")
-            exit()
+            error = "\n[ERROR] Invalid value!!\n line"+str(linecount)+":"+" ".join(a)+ " <--"
+            return ""
 
 
     return b
@@ -151,8 +153,9 @@ def Convert_Prog_to_bin_temp(fp,debug):
     global UNARY_OPS
     global calls
     global cf
+    global error
+    global equivalent_binary
     linecount = 0
-    binary_file_linecount = 1
 
 
     assembly = []
@@ -166,36 +169,40 @@ def Convert_Prog_to_bin_temp(fp,debug):
         a = a.strip().split(' ')
         if a[0]=='' :
             # bin_temp = ""
-            assembly.append((""," ".join(a)) )
+            assembly.append((""," ".join(a),-1 ))
             a=fp.readline()
 
         elif a[0][0]=='@':
             if a[0][1:] not in calls.keys():
                 calls[a[0][1:]] = str(binary_file_linecount)
-            assembly.append((""," ".join(a)) )
+            assembly.append((""," ".join(a),-1 ))
             a=fp.readline()
 
             # print("hi  ",a)
         elif a[0] not in OP_CODES.keys():
+
             print("\n[ERROR] No such command !!")
             print(" line",linecount,":"," ".join(a))
+            error = "\n[ERROR] No such command !!\n line"+str(linecount)+":"+" ".join(a)
             fp.close()
-            exit()
+            return 1
         else:
             bin_temp = OP_CODES[a[0]]
             if a[0] in ['HALT','CHECK']:
                 if len(a)>1:
-                    print("[ERROR] no operand expected!")
+                    print("[ERROR] no operand expected!! ")
                     print(" line",linecount,":"," ".join(a))
+                    error = "\n[ERROR] no operand expected!! \n line"+str(linecount)+":"+" ".join(a)
                     fp.close()
-                    exit()
-                bin_temp = bin_temp + "00000000000000000000" #extra zeros are padding
+                    return 1
+                bin_temp = bin_temp #extra zeros are padding
 
             elif len(a)>2 and (a[0] in UNARY_OPS) :
                 print("[ERROR] single operand expected!")
                 print(" line",linecount,":"," ".join(a))
+                error = "\n[ERROR] single operand expected!! \n line"+str(linecount)+":"+" ".join(a)
                 fp.close()
-                exit()
+                return 1
 
             elif (a[0] in UNARY_OPS) and len(a)==2:
                 if a[0][:4]=='JUMP':
@@ -205,32 +212,38 @@ def Convert_Prog_to_bin_temp(fp,debug):
                         if add == '':
                             print("[ERROR] No tag found!")
                             print(" line",linecount,":"," ".join(a), "<--\n")
+                            error = "\n[ERROR] No tag found! \n line"+str(linecount)+":"+" ".join(a)+" <--\n"
                             fp.close()
-                            exit()
+                            return 1
                         fp.seek(f)
-                        bin_temp = bin_temp + add + "0000000000000000" #extra zeros are padding
+                        bin_temp = bin_temp + add
                     elif a[1][0]=='#':
                         add = hex_to_bin(a[1][1:])
-                        bin_temp = bin_temp + add + "0000000000000000" #extra zeros are padding
+                        if add=="":
+                            return 1
+                        bin_temp = bin_temp + add
                     else:
                         print("\n[ERROR] Invalid operand !!")
                         print(" line",linecount,":"," ".join(a))
+                        error = "\n[ERROR] Invalid operand ! \n line"+str(linecount)+":"+" ".join(a)
                         fp.close()
-                        exit()
+                        return 1
                 elif a[1] in REGISTERS.keys():
-                    bin_temp = bin_temp + REGISTERS[a[1]] + "0000000000000000" #extra zeros are padding
+                    bin_temp = bin_temp + REGISTERS[a[1]]
 
                 else:
                     print("\n[ERROR] No such operand register !!")
                     print(" line",linecount,":"," ".join(a))
+                    error = "\n[ERROR] No such operand register !! \n line"+str(linecount)+":"+" ".join(a)
                     fp.close()
-                    exit()
+                    return 1
 
             elif len(a) > 3:
                 print("[ERROR] two operands expected!")
                 print(" line",linecount,":"," ".join(a), "<--")
+                error = "\n[ERROR]  two operands expected! \n line"+str(linecount)+":"+" ".join(a)+" <--"
                 fp.close()
-                exit()
+                return 1
 
             else:
                 # print("a0 a1",a[0],a[1])
@@ -239,37 +252,45 @@ def Convert_Prog_to_bin_temp(fp,debug):
                     if a[0] not in {'SET', 'MOD'} :
 
                         if a[2] in REGISTERS.keys():
-                            bin_temp = bin_temp + REGISTERS[a[2]] + '000000000000' #extra zeros are padding
+                            bin_temp = bin_temp + REGISTERS[a[2]]
                         else:
                             print("\n[ERROR] No such operand register !!")
                             print(" line",linecount,":",a[0],a[1], a[2],"<--")
+                            error = "\n[ERROR] No such operand register !! \n line"+str(linecount)+":"+a[0]+a[1]+ a[2]+" <--"
                             fp.close()
-                            exit()
+                            return 1
                     else:
                         if len(a)==3:
                             if len(a[2]) ==4:
-                                bin_temp = bin_temp + hex_to_bin(a[2])
+                                temp = hex_to_bin(a[2])
+                                if temp=="":
+                                    return 1
+                                bin_temp = bin_temp + temp
                             else:
                                 print("\n[ERROR] Invalid value (4 char hex required)!!")
                                 print(" line",linecount,":",a[0],a[1], a[2],"<--")
+                                error = "\n[ERROR] Invalid value (4 char hex required)! \n line"+str(linecount)+":"+a[0]+a[1]+ a[2]+" <--"
                                 fp.close()
-                                exit()
+                                return 1
                         else:
                             print("\n[ERROR] TWO operands required !!")
                             print(" line",linecount,":"," ".join(a) ,"<--")
+                            error = "\n[ERROR]  TWO operands required !! \n line"+str(linecount)+":"+" ".join(a)+" <--"
                             fp.close()
-                            exit()
+                            return 1
                 else:
                     print("\n[ERROR] No such operand register !!")
                     a.insert(2,'<--')
                     print(" line",linecount,":"," ".join(a))
+                    error = "\n[ERROR]  two operands expected! \n line"+str(linecount)+":"+" ".join(a)
                     fp.close()
-                    exit()
+                    return 1
         # print("line",linecount,":",a)
-            assembly.append((bin_temp," ".join(a)) )
+            assembly.append((bin_temp.ljust(instruction_width,'0')," ".join(a), binary_file_linecount) )
             binary_file_linecount = binary_file_linecount+1
             a = fp.readline()
-    return assembly
+    equivalent_binary = assembly
+    return 0
 
 
 
@@ -324,18 +345,40 @@ def DetectCalls(tag,fp):
 #                         DRIVER FUNCTION FOR MODULE CALL
 # ----------------------------------------------------------------------------
 
-def assemble(filename):
+# ------------------------------------------------------------------------------
+# assemble: DRIVER FUNCTION FOR MODULE CALL
+#
+# Parameters: filename --> name of the file containing assembly
+#             beg_add --> begining address of the memory location
+#                          where prog will be stored
+#
+# Return values:  --> 0 when sucessful, else 1
+# ------------------------------------------------------------------------------
+def assemble(filename,beg_add):
     global debug
     global cf
+    global equivalent_binary
+    global binary_file_linecount
+    binary_file_linecount=beg_add
+
+    print("\n\n\nstarting with memory: ",binary_file_linecount)
     cf = currentframe()
-    filename = getframeinfo(cf).filename
+    # filename = getframeinfo(cf).filename
     debug=0
 
     fp = open(filename, "r")
     if debug>0: print("\n [DEBUG] Opened! :",sys.argv[1])
     if debug>0: print("\n")
     b = Convert_Prog_to_bin_temp(fp,debug)
+    # print("Output of assembler:",equivalent_binary)
     fp.close()
+    print("\n\n (DEBUGGER)  BINARY:")
+    debug_display(equivalent_binary)
+    return b
+
+
+
+
 
 # ----------------------------------------------------------------------------
 #                         DRIVER FUNCTION FOR CLI CALL\EXECUTION
