@@ -21,7 +21,7 @@ class CustomNotebook(ttk.Notebook):
         self.bind("<ButtonRelease-1>", self.on_close_release)
 
 
-    
+
 
     def on_close_press(self, event):
         """Called when the button is pressed over the close button"""
@@ -40,7 +40,7 @@ class CustomNotebook(ttk.Notebook):
 
         element =  self.identify(event.x, event.y)
         index = self.index("@%d,%d" % (event.x, event.y))
-
+        print("index ===", index)
         if "close" in element and self._active == index:
             self.forget(index)
             self.event_generate("<<NotebookTabClosed>>")
