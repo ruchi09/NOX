@@ -13,7 +13,7 @@ from customNotebook import CustomNotebook  #user defined
 import gui_assembler as assembler
 from Execution import *
 
-COLORS = {'color' : '#40E0D0'}
+COLORS = {'color' : '#40E0D0',"menu":"#20b2aa","console":'#bfd9d9'}
 ASSEMBLING = 0
 FILE_OPEN = 0
 EDITING = 0
@@ -195,10 +195,19 @@ class Code(Frame):
         # print("current: " , self.cn.select())
         for i in self.tabs:
             self.cn.forget(self.cn.index(i))
-        e = ExecutionGUI(self)
-        e.pack(side = 'left',fill ="both")
-        self.cn.add(e, text="exec")
-        self.cn.select(self.cn.index("end")-1)
+
+        # e = ScrolledText(self, width=750)
+        # e.insert("1.0", "prog" )
+        file = "filename"
+        f = Frame(self, background="#ffffff")
+        Label(f, text="%s" % file, borderwidth="1",relief="solid",
+                height=3, background = COLORS["console"]).pack(side=TOP, fill="x")
+
+        e = ExecutionGUI(f)
+        e.pack(side=TOP,fill="both", expand=True)
+        # e.pack(side = 'top',fill ="both", expand=True)
+        self.cn.add(f, text="exec")
+        # self.cn.select(self.cn.index("end")-1)
 
 
     def onRunStepByStep():
@@ -264,7 +273,7 @@ def add_top_menu(frame):
     global FILE_OPEN
     global runmenu
     global c
-    menu = Menu(frame, bg = '#20b2aa')
+    menu = Menu(frame, bg = COLORS["menu"])
 
     filemenu = Menu(menu)
     menu.add_cascade(label='File', menu=filemenu)
@@ -352,7 +361,7 @@ if __name__ == '__main__':
     pins = Frame(pin_console_code, width =30, bg = 'gray85')
     p = Frame(pins, width =30, bg = 'gray80', height = 50,highlightbackground="black", highlightcolor="black", highlightthickness=1)
     c= Code(pin_console_code,bg = 'gray89', width=700, height =100) # inserting CODE GUI
-    console = ScrolledText(pin_console_code,bg='#bfd9d9', height = 14,width=800)
+    console = ScrolledText(pin_console_code,bg=COLORS["console"], height = 14,width=800)
     console.config(state=DISABLED)
 
 
